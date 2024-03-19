@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { Entypo } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation } from "@react-navigation/native";
+import { DataStore } from "@aws-amplify/datastore";
+import { Post } from "../models";
+import { Auth } from "aws-amplify";
 
 const user = {
   id: "u1",
@@ -17,8 +20,20 @@ const CreatePostScreen = () => {
 
   const navigation = useNavigation();
 
-  const onPost = () => {
+  const onSubmit = async () => {
     console.warn("Posting: ", description);
+
+    const userData = await Auth.currentAuthenticatedUser();
+    const newPost = new Post({
+      description,
+      // "imag": "Lorem ipsum dolor sit amet",
+      numberOfLikes: 0,
+      numberOfShares: 0,
+      postUserId: userData.attributes.sub,
+      _version: 1,
+    });
+    await DataStore.save(newPost);
+
     setDescription("");
     navigation.goBack();
   };
@@ -64,7 +79,7 @@ const CreatePostScreen = () => {
       <Image source={{ uri: image }} style={styles.image} />
 
       <View style={styles.buttonContainer}>
-        <Button onPress={onPost} title="Post" disabled={!description} />
+        <Button onPress={onSubmit} title="Post" disabled={!description} />
       </View>
     </View>
   );
